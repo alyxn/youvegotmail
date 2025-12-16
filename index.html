@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>postcard.club</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=VT323&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><text y="16" font-size="16">✿</text></svg>'), auto;
+        }
+        
+        button, .stamp, .shutter-btn, .symbol-btn {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><text y="16" font-size="16">♡</text></svg>'), pointer !important;
+        }
+        
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: #f5f3f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #4a4a4a;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        h1 {
+            font-family: 'VT323', monospace;
+            font-size: 3em;
+            color: #8b7d7d;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .tagline {
+            font-size: 0.9em;
+            color: #a39999;
+            letter-spacing: 1px;
+        }
+        
+        .container {
+            background: #fefdfb;
+            border: 2px solid #d4ccc8;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 4px 4px 0px #e8e3df;
+            animation: slideUp 0.8s ease;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        .polaroid-camera {
+            background: linear-gradient(180deg, #e8dfd7 0%, #d6cdc5 100%);
+            border: 3px solid #bfb5ad;
+            border-radius: 25px;
+            padding: 25px 20px 20px 20px;
+            margin: 0 auto;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .camera-top {
+            background: #c9bfb7;
+            height: 15px;
+            margin: -25px -20px 15px -20px;
+            border-bottom: 2px solid #a89e96;
+            border-radius: 22px 22px 0 0;
+            position: relative;
+        }
+        
+        .camera-brand {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7em;
+            color: #8b8179;
+            font-family: 'VT323', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .viewfinder {
+            background: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 4px solid #9d9389;
+            border-radius: 15px;
+            aspect-ratio: 4/3;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .viewfinder video,
+        .viewfinder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        .camera-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .camera-flash.active {
+            animation: flash 0.3s ease;
+        }
+        
+        .camera-bottom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .shutter-btn {
+            width: 60px;
+            height: 60px;
+            background: #b8a8a0;
+            border: 3px solid #9d8d85;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.1s;
+        }
+        
+        .shutter-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #8b7d7d;
+            border-radius: 50%;
+        }
+        
+        .shutter-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .shutter-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .flash-bulb {
+            width: 30px;
+            height: 30px;
+            background: #fff4e6;
+            border: 2px solid #d4c4bc;
+            border-radius: 50%;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .postcard-preview {
+            background: #faf8f5;
+            border: 2px solid #d4ccc8;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .postcard-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border: 1px solid #c9c1bd;
+            margin-bottom: 15px;
+            background: #f0ebe7;
+        }
+        
+        .message-section {
+            position: relative;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.95em;
+            padding: 12px;
+            border: 1px solid #d4ccc8;
+            background: #fefdfb;
+            resize: none;
+            color: #4a4a4a;
+            margin-bottom: 10px;
+        }
+        
+        textarea:focus {
+            outline: 2px solid #c4b8b0;
+        }
+        
+        .signature-input {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9em;
+            border: 1px solid #d4ccc8;
+            background: #fefdfb;
+            color: #4a4a4a;
+        }
+        
+        .signature-input:focus {
+            outline: 2px solid #c4b8b0;
+        }
+        
+        .symbols-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding: 10px;
+            background: #faf8f5;
+            border: 1px solid #e8e3df;
+            border-radius: 8px;
+        }
+        
+        .symbol-btn {
+            background: #fefdfb;
+            border: 1px solid #d4ccc8;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+        
+        .symbol-btn:hover {
+            background: #f0ebe7;
+            transform: scale(1.1);
+        }
+        
+        .stamps-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .stamp {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px dashed #c4b8b0;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            background: #fefdfb;
+            padding: 10px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .stamp:hover {
+            background: #f5f1ed;
+            border-color: #a89e96;
+        }
+        
+        .stamp.selected {
+            border: 2px solid #8b7d7d;
+            background: #f0ebe7;
+        }
+        
+        .btn {
+            background: #d4ccc8;
+            color: #5a5a5a;
+            border: 2px solid #bfb5ad;
+            border-radius: 20px;
+            padding: 10px 25px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            margin: 5px;
+            box-shadow: 2px 2px 0px #bfb5ad;
+        }
+        
+        .btn:hover {
+            background: #c9bfb7;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #bfb5ad;
+        }
+        
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+        
+        .btn-primary {
+            background: #b8a8a0;
+            border-color: #9d8d85;
+            color: #fefdfb;
+            box-shadow: 2px 2px 0px #9d8d85;
+        }
+        
+        .btn-primary:hover {
+            background: #a89e96;
+            box-shadow: 1px 1px 0px #9d8d85;
+        }
+        
+        .mailbox-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(245, 243, 240, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .mailbox-animation.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .mailbox {
+            font-size: 8em;
+            position: relative;
+            text-align: center;
+        }
+        
+        .ascii-mailbox {
+            font-family: 'Courier Prime', monospace;
+            white-space: pre;
+            line-height: 1.2;
+            color: #8b7d7d;
+            font-size: 0.2em;
+        }
+        
+        .postcard-flying {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.15em;
+            animation: dropInMailbox 1.5s ease forwards;
+            font-family: 'Courier Prime', monospace;
+            white-space: pre;
+            line-height: 1;
+        }
+        
+        .success-message {
+            color: #8b7d7d;
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 1.2s forwards;
+            font-family: 'VT323', monospace;
+            letter-spacing: 2px;
+        }
+        
+        .thank-you-page {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .thank-you-page h2 {
+            font-family: 'VT323', monospace;
+            font-size: 2em;
+            color: #8b7d7d;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        
+        .thank-you-page p {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #a39999;
+            margin-bottom: 30px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 0.85em;
+            color: #a39999;
+            letter-spacing: 1px;
+            padding: 8px;
+            border: 1px solid #e8e3df;
+            background: #faf8f5;
+            border-radius: 8px;
+        }
+        
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.95em;
+            border: 1px solid #d4ccc8;
+            border-radius: 8px;
+            margin: 10px 0;
+            background: #fefdfb;
+        }
+        
+        input[type="email"]:focus {
+            outline: 2px solid #c4b8b0;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .upload-hint {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #a39999;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        @keyframes dropInMailbox {
+            0% {
+                top: -100px;
+                opacity: 1;
+                transform: translateX(-50%) rotate(0deg);
+            }
+            100% {
+                top: 200px;
+                opacity: 0;
+                transform: translateX(-50%) rotate(15deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>postcard.club</h1>
+        <p class="tagline">send love through the wire</p>
+    </header>
+    
+    <div class="container">
+        <div class="step-indicator">
+            <span id="stepText">STEP 1: CAPTURE</span>
+        </div>
+        
+        <!-- Step 1: Camera -->
+        <div class="step active" id="step1">
+            <div class="polaroid-camera">
+                <div class="camera-top">
+                    <span class="camera-brand">POLAROID</span>
+                </div>
+                <div class="viewfinder">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <div class="camera-flash" id="flash"></div>
+                </div>
+                <div class="camera-bottom">
+                    <div class="flash-bulb"></div>
+                    <div class="shutter-btn" id="shutterBtn"></div>
+                    <div class="flash-bulb"></div>
+                </div>
+            </div>
+            <div class="upload-hint">
+                <button class="btn" id="uploadBtn">upload image</button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            </div>
+        </div>
+        
+        <!-- Step 2: Write Message -->
+        <div class="step" id="step2">
+            <div class="postcard-preview">
+                <img id="capturedImage" class="postcard-image">
+                <div class="message-section">
+                    <textarea id="message" placeholder="write your message..."></textarea>
+                    <div class="symbols-bar">
+                        <button class="symbol-btn" onclick="insertSymbol('★')">★</button>
+                        <button class="symbol-btn" onclick="insertSymbol('♡')">♡</button>
+                        <button class="symbol-btn" onclick="insertSymbol('✿')">✿</button>
+                        <button class="symbol-btn" onclick="insertSymbol('☆')">☆</button>
+                        <button class="symbol-btn" onclick="insertSymbol('◇')">◇</button>
+                        <button class="symbol-btn" onclick="insertSymbol('○')">○</button>
+                        <button class="symbol-btn" onclick="insertSymbol('△')">△</button>
+                        <button class="symbol-btn" onclick="insertSymbol('□')">□</button>
+                        <button class="symbol-btn" onclick="insertSymbol('♪')">♪</button>
+                        <button class="symbol-btn" onclick="insertSymbol('☁')">☁</button>
+                        <button class="symbol-btn" onclick="insertSymbol('✩')">✩</button>
+                        <button class="symbol-btn" onclick="insertSymbol('⊹')">⊹</button>
+                    </div>
+                    <input type="text" class="signature-input" id="signature" placeholder="sign your name... (optional)">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn" onclick="goToStep(1)">← back</button>
+                <button class="btn btn-primary" onclick="goToStep(3)">continue →</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Choose Stamp -->
+        <div class="step" id="step3">
+            <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.2em; color: #8b7d7d; font-weight: normal;">select stamp</h2>
+            <div class="stamps-container">
+                <div class="stamp" onclick="selectStamp(this, '✿ flower ✿')">✿<br>flower</div>
+                <div class="stamp" onclick="selectStamp(this, '☆ star ☆')">☆<br>star</div>
+                <div class="stamp" onclick="selectStamp(this, '♡ heart ♡')">♡<br>heart</div>
+                <div class="stamp" onclick="selectStamp(this, '◇ diamond ◇')">◇<br>diamond</div>
+                <div class="stamp" onclick="selectStamp(this, '☁ cloud ☁')">☁<br>cloud</div>
+                <div class="stamp" onclick="selectStamp(this, '♪ music ♪')">♪<br>music</div>
+                <div class="stamp" onclick="selectStamp(this, '★ sparkle ★')">★<br>sparkle</div>
+                <div class="stamp" onclick="selectStamp(this, '○ circle ○')">○<br>circle</div>
+            </div>
+            <div class="postcard-preview">
+                <img id="finalImage" class="postcard-image">
+                <p style="padding: 12px; background: #fefdfb; border: 1px solid #e8e3df; min-height: 80px; font-size: 0.9em;" id="finalMessage"></p>
+                <p style="padding: 12px; background: #faf8f5; border-top: 1px dashed #e8e3df; font-size: 0.85em; font-style: italic; color: #8b7d7d;" id="finalSignature"></p>
+                <div style="text-align: right; font-size: 1.2em; margin-top: 10px; font-family: 'Courier Prime', monospace;" id="selectedStamp"></div>
+            </div>
+            <div class="button-group">
+                <button class="btn" onclick="goToStep(2)">← back</button>
+                <button class="btn btn-primary" onclick="goToStep(4)">continue →</button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Send Options -->
+        <div class="step" id="step4">
+            <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.2em; color: #8b7d7d; font-weight: normal;">send postcard</h2>
+            <div class="options-grid">
+                <button class="btn btn-primary" onclick="sendEmail()">email</button>
+                <button class="btn btn-primary" onclick="downloadPostcard()">download</button>
+                <button class="btn btn-primary" onclick="sharePostcard()">share</button>
+            </div>
+            <div id="emailForm" style="display:none; margin-top: 20px;">
+                <input type="email" id="recipientEmail" placeholder="recipient@email.com">
+                <div style="text-align: center;">
+                    <button class="btn btn-primary" onclick="confirmSend()">send →</button>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn" onclick="goToStep(3)">← back</button>
+            </div>
+        </div>
+        
+        <!-- Step 5: Thank You -->
+        <div class="step" id="step5">
+            <div class="thank-you-page">
+                <h2>✿ thank you ✿</h2>
+                <p>i hope you find magic<br>in the mundane</p>
+                <button class="btn btn-primary" onclick="resetAndStart()">send another postcard</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mailbox Animation -->
+    <div class="mailbox-animation" id="mailboxAnimation">
+        <div>
+            <div class="mailbox">
+                <div class="ascii-mailbox">  ___________
+ |  __   __ |
+ | |  | |  ||
+ | |  | |  ||
+ | |__| |__||
+ |    ___   |
+ |   |   |  |
+ |___|___|__|</div>
+                <div class="postcard-flying">┌─────┐
+│ ♡   │
+│  ✿  │
+└─────┘</div>
+            </div>
+            <div class="success-message">SENT!</div>
+        </div>
+    </div>
+    
+    <script>
+        let stream = null;
+        let capturedImageData = null;
+        let selectedStampEmoji = '';
+        
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                document.getElementById('video').srcObject = stream;
+            } catch (err) {
+                console.log('Camera not available:', err);
+            }
+        }
+        
+        initCamera();
+        
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+        
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    capturedImageData = e.target.result;
+                    document.getElementById('capturedImage').src = capturedImageData;
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    goToStep(2);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        document.getElementById('shutterBtn').addEventListener('click', function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const flash = document.getElementById('flash');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            flash.classList.add('active');
+            setTimeout(() => flash.classList.remove('active'), 300);
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            capturedImageData = canvas.toDataURL('image/png');
+            
+            document.getElementById('capturedImage').src = capturedImageData;
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            goToStep(2);
+        });
+        
+        function insertSymbol(symbol) {
+            const textarea = document.getElementById('message');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + symbol + text.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + symbol.length;
+            textarea.focus();
+        }
+        
+        function goToStep(stepNum) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + stepNum).classList.add('active');
+            
+            const stepTexts = {
+                1: 'STEP 1: CAPTURE',
+                2: 'STEP 2: MESSAGE',
+                3: 'STEP 3: STAMP',
+                4: 'STEP 4: SEND',
+                5: ''
+            };
+            document.getElementById('stepText').textContent = stepTexts[stepNum];
+            
+            if (stepNum === 3) {
+                document.getElementById('finalImage').src = capturedImageData;
+                document.getElementById('finalMessage').textContent = document.getElementById('message').value || '(no message)';
+                const sig = document.getElementById('signature').value;
+                document.getElementById('finalSignature').textContent = sig ? '- ' + sig : '';
+                document.getElementById('finalSignature').style.display = sig ? 'block' : 'none';
+            }
+            
+            if (stepNum === 1 && !stream) {
+                initCamera();
+            }
+        }
+        
+        function selectStamp(element, text) {
+            document.querySelectorAll('.stamp').forEach(s => s.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedStampEmoji = text;
+            document.getElementById('selectedStamp').textContent = text;
+        }
+        
+        function sendEmail() {
+            document.getElementById('emailForm').style.display = 'block';
+        }
+        
+        function confirmSend() {
+            const email = document.getElementById('recipientEmail').value;
+            if (email) {
+                showMailboxAnimation();
+            } else {
+                alert('please enter an email address');
+            }
+        }
+        
+        function downloadPostcard() {
+            createFinalImage((finalImage) => {
+                const link = document.createElement('a');
+                link.download = 'postcard.png';
+                link.href = finalImage;
+                link.click();
+            });
+            setTimeout(() => goToStep(5), 500);
+        }
+        
+        function sharePostcard() {
+            createFinalImage(async (finalImage) => {
+                const blob = await (await fetch(finalImage)).blob();
+                const file = new File([blob], 'postcard.png', { type: 'image/png' });
+                
+                if (navigator.share && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'My Postcard',
+                        text: 'Check out my postcard!'
+                    });
+                    goToStep(5);
+                } else {
+                    downloadPostcard();
+                }
+            });
+        }
+        
+        function createFinalImage(callback) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#faf8f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 20, 20, 760, 380);
+                
+                ctx.fillStyle = '#fefdfb';
+                ctx.fillRect(20, 420, 760, 140);
+                ctx.strokeStyle = '#d4ccc8';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, 420, 760, 140);
+                
+                ctx.fillStyle = '#4a4a4a';
+                ctx.font = '18px "Courier Prime"';
+                const message = document.getElementById('message').value || '(no message)';
+                wrapText(ctx, message, 35, 445, 730, 25);
+                
+                const sig = document.getElementById('signature').value;
+                if (sig) {
+                    ctx.fillStyle = '#8b7d7d';
+                    ctx.font = 'italic 16px "Courier Prime"';
+                    ctx.fillText('- ' + sig, 35, 540);
+                }
+                
+                ctx.fillStyle = '#8b7d7d';
+                ctx.font = '20px "Courier Prime"';
+                ctx.fillText(selectedStampEmoji, 650, 550);
+                
+                callback(canvas.toDataURL('image/png'));
+            };
+            img.src = capturedImageData;
+        }
+        
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let yPos = y;
+            
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, yPos);
+                    line = words[n] + ' ';
+                    yPos += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, yPos);
+        }
+        
+        function showMailboxAnimation() {
+            const animation = document.getElementById('mailboxAnimation');
+            animation.classList.add('active');
+            
+            setTimeout(() => {
+                animation.classList.remove('active');
+                goToStep(5);
+            }, 3000);
+        }
+        
+        function resetAndStart()
